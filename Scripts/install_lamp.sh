@@ -34,4 +34,6 @@ sudo systemctl start mysqld
 #Habilitamos que se inicie después de cada reinicio.
 sudo systemctl enable mysqld
 
-systemctl restart apache
+systemctl restart httpd
+
+cp ../php/index.php /var/www/html
