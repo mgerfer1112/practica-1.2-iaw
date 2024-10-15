@@ -34,6 +34,14 @@ sudo systemctl start mysqld
 #Habilitamos que se inicie después de cada reinicio.
 sudo systemctl enable mysqld
 
+#Instalamos php
+sudo dnf install php -y
+
+#
+sudo dnf install php-mysqlnd -y
+
+#Reiniciamos apache
 systemctl restart httpd
 
 cp ../php/index.php /var/www/html
+
