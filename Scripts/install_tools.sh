@@ -26,10 +26,10 @@ sudo tar xvf /var/www/html/phpMyAdmin-latest-all-languages.tar.gz -C /var/www/ht
 rm -rf /var/www/html/phpMyAdmin-latest-all-languages.tar.gz
 
 #Eliminamos instalaciones previas de phpMyAdmin
-rm -rf /var/html/phpmyadmin
+rm -rf /var/www/html/phpmyadmin
 
 #Renombramos el nombre del directorio de phpMyAdmin
-mv /var/www/html/phpMyAdmin-latest-all-languages.tar.gz /var/www/html/phpmyadmin
+mv /var/www/html/phpMyAdmin-5.2.1-all-languages /var/www/html/phpmyadmin
 
 #Cambiamos el propietario y el grupo del directorio.
 sudo chown -R apache:apache /var/www/html
