@@ -1,7 +1,7 @@
-#/bin/bash
+#!/bin/bash
 
 #Para importar las variables.
-source .env 
+source .env
 
 #Configuramos para mostrar los comandos del script y 
 #para que la ejecución se detenga cuando hay un error.
@@ -63,3 +63,12 @@ mysql -u root < /var/www/html/phpmyadmin/sql/create_tables.sql
 mysql -u root <<< "DROP USER IF EXISTS $PMA_USER@'%'"
 mysql -u root <<< "CREATE USER $PMA_USER@'%' IDENTIFIED BY '$PMA_PASS'"
 mysql -u root <<< "GRANT ALL PRIVILEGES ON $PMA_DB.* TO $PMA_USER@'%'"
+
+
+RANDOM_VALUE=`openssl rand -hex 16`
+
+#
+sed -i "s/\(\$cfg\['blowfish_secret'\] =\).*/\1 '$RANDOM_VALUE';/" /var/www/html/phpmyadmin/config.inc.php
+
+#Añadimos la configuración del directorio temporal.
+sed -i "/blowfish_secret/a \$cfg\['TempDir'\] = '/tmp' /var/www/html/phpmyadmin/config.inc.php;

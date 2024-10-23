@@ -18,7 +18,7 @@ sudo systemctl start httpd
 
 #Habilitamos el servicio para que se inicie automáticamente 
 #dspués de cada inicio.
-sudo systemctl enable httpd
+systemctl enable httpd
 
 # /usr/lib/systemd/system/httpd.service. se crea un url simbólico en el que
 #se alojan todos los servicios que se inician automáticamente.
@@ -26,19 +26,19 @@ sudo systemctl enable httpd
 # !! Instalación de MySQL servr.
 
 #Instalamos MySQL Server
-sudo dnf install mysql-server -y
+dnf install mysql-server -y
 
 #Iniciamos el servicio.
-sudo systemctl start mysqld
+systemctl start mysqld
 
 #Habilitamos que se inicie después de cada reinicio.
-sudo systemctl enable mysqld
+systemctl enable mysqld
 
 #Instalamos php
-sudo dnf install php -y
+dnf install php -y
 
 #
-sudo dnf install php-mysqlnd -y
+dnf install php-mysqlnd -y
 
 #Reiniciamos apache
 systemctl restart httpd
