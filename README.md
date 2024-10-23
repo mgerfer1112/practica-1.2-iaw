@@ -102,6 +102,17 @@ systemctl enable mysqld
 
 ## Instalación de PHP.
 
+
+PHP (Hypertext Preprocessor) es un lenguaje de programación utilizado para crear páginas web dinámicas.
+
+Comando para instalar php:
+
+```dnf install php -y```
+
+Comando para instalar el controlador de MySQL para PHP:
+
+```dnf install php-mysqlnd -y```
+
 **Creación de index.php**
 
 Fuera de la carpeta scripts crearemos la carpeta **PHP** donde almacenaremos *index.php* el cual contendrá:
@@ -112,7 +123,10 @@ phpinfo();
 ?>
 ```
 
-**Copiamos el scritp de prueba php**
+Reiniciamos Apache
+```systemctl restart httpd```
+
+Copiamos el scritp de prueba php
 
 ```cp ../php/index.php /var/www/html```
 
@@ -120,6 +134,151 @@ phpinfo();
 
 ```chown -R www-data:www-data /var/www/html```
 
+
+
 Podemos comprobar el funcionamiento de PHP buscando nuestra IP seguida de index.php (el archivo que hemos creado anteriormente)
 
 En nuestro caso sería: 
+
+![image](https://github.com/user-attachments/assets/6f1d5a5e-02f1-4fd3-9136-64b8ec012407)
+
+# Desarrollo de install.tools.sh
+
+El script `install_tools.sh` tiene como propósito principal automatizar el proceso de instalación y configuración de **phpMyAdmin** en un servidor que utiliza el gestor de paquetes **DNF**. Este script se encarga de realizar las siguientes tareas:
+
+1. Instalación de phpMyAdmin.
+2. Creación de la Base de Datos y gestión de usuarios.
+3. Gestión de seguridad.
+
+A continuación detallaremos los detalles de su instalación.
+
+Las primeras líneas serán similares a install_lamp.sh
+
+``` 
+#!/bin/bash
+
+source .env
+
+set -ex
+
+dnf update -y
+```
+
+Podemos observar la adición de `source .env`. Lo cual enlaza .env, un documento en el que hemos definido las variables y establecido sus valores, a install_tools.sh, el cual las utilizará más adelante.
+
+Para poder utilizar .env deberemos tener en cuenta lo siguiente.
+
+**En el directorio raiz deberemos contar con *.gitignore*.**
+
+.gitignore indica a GitHub que debe ignorar .env, esto es muy útil, ya que podemos hacer funcionar nuestro script, pero no mostrando los detalles sensibles como nombres de usuario y contraseñas.
+
+Es importante aún así la creación de .env-example, el cual contendrá las variables sin valores. Este documento ayudará a otros desarrolladores a conocer las variables y poder inicilizarlas fácilmente.
+
+.env-example:
+```
+PMA_USER=
+PMA_PASS=
+PMA_DB=
+```
+## Instalación de phpMyAdmin.
+
+Comando para la instalación de las dependencias necesarias para phpMyAdmin:
+
+```
+dnf install php-mbstring php-zip php-json php-gd php-fpm php-xml -y
+```
+
+Reinicio de apache.
+
+```
+systemctl restart httpd
+```
+
+A continuación, instalaremos la herramienta wget, la cual nos ayudará a descargar archivos desde la web. 
+
+
+```
+dnf install wget -y
+````
+Una vez que la instalación se haya completado, procederemos a descargar el archivo comprimido que contiene la última versión de phpMyAdmin. Utilizaremos el siguiente comando:
+
+```
+wget https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.tar.gz -P /var/www/html
+```
+
+Este comando descargará el archivo *phpMyAdmin-latest-all-languages.tar.gz* y lo guardará en el directorio /var/www/html, que es el lugar donde Apache busca los archivos que necesita.
+
+A continuación descomprimiremos el .zip.
+
+```
+tar xvf /var/www/html/phpMyAdmin-latest-all-languages.tar.gz -C /var/www/html
+```
+
+Para asegurar que en el sistema no quedan archivos innecesario eliminaremos el .zip y otras instalaciones previvas de pypMyAdmin.
+
+```
+rm -rf /var/www/html/phpMyAdmin-latest-all-languages.tar.gz
+
+rm -rf /var/www/html/phpmyadmin
+```
+
+Para facilitar el uso cambiaremos el nombre de phpmyadmin
+
+```
+mv /var/www/html/phpMyAdmin-5.2.1-all-languages /var/www/html/phpmyadmin
+```
+
+Para que apache pueda acceder a la carpeta será necesario que le añadamos como propietario de ésta.
+
+```
+chown -R apache:apache /var/www/html
+```
+
+Una vez que phpMyAdmin está instalado y el directorio está configurado correctamente, creamos un archivo de configuración a partir del archivo de ejemplo que viene incluido en la instalación. Esto se realiza con el siguiente comando:
+
+```
+cp /var/www/html/phpmyadmin/config.sample.inc.php /var/www/html/phpmyadmin/config.inc.php
+```
+
+Podemos verificar la instalación buscando la IP seguida de /phpmyadmin
+
+![image](https://github.com/user-attachments/assets/b6f7ec52-27f7-4ec7-950d-f74a3502425d)
+
+
+## MySQL Gestión de usuarios.
+
+En primer lugar crearemos la base de datos.
+
+```
+mysql -u root < /var/www/html/phpmyadmin/sql/create_tables.sql
+
+mysql -u root <<< "DROP USER IF EXISTS $PMA_USER@'%'"
+
+mysql -u root <<< "CREATE USER $PMA_USER@'%' IDENTIFIED BY '$PMA_PASS'"
+
+mysql -u root <<< "GRANT ALL PRIVILEGES ON $PMA_DB.* TO $PMA_USER@'%'"
+
+```
+
+## Seguridad.
+
+Para aumentar la seguridad de la instalación de phpMyAdmin, generamos un valor aleatorio que se utilizará como la clave secreta de Blowfish. Este valor se almacena en la configuración de phpMyAdmin para encriptar las cookies:
+
+```
+RANDOM_VALUE=`openssl rand -hex 16`
+```
+
+Actualizamos el archivo de configuración de phpMyAdmin para incluir este valor:
+
+```
+sed -i "s/\(\$cfg\['blowfish_secret'\] =\).*/\1 '$RANDOM_VALUE';/" /var/www/html/phpmyadmin/config.inc.php
+```
+
+Finalmente, añadimos una configuración adicional para establecer un directorio temporal que phpMyAdmin utilizará. Esto se hace con el siguiente comando:
+
+```
+sed -i "/blowfish_secret/a \$cfg\['TempDir'\] = '/tmp';" /var/www/html/phpmyadmin/config.inc.php
+```
+
+![image](https://github.com/user-attachments/assets/c8bc1f89-93cf-4e14-a330-7fba5b39e9a3)
+ss

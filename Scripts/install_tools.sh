@@ -11,19 +11,19 @@ set -ex
 dnf update -y
 
 #Instalamos las dependencias necesarias para phpMyAdmin
-sudo dnf install php-mbstring php-zip php-json php-gd php-fpm php-xml -y
+dnf install php-mbstring php-zip php-json php-gd php-fpm php-xml -y
 
 #Reiniciamos el servicio de apache
 systemctl restart httpd
 
 #Instalamos la herramienta wget
-sudo dnf install wget -y
+dnf install wget -y
 
 #Descargamos el codigo fuente de phpMyAdmin
-sudo wget https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.tar.gz -P /var/www/html
+wget https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-all-languages.tar.gz -P /var/www/html
 
 #Descargamos el tar en /var/www/html. Con -C elegimos la ruta en la que lo queremos descomprimir.
-sudo tar xvf /var/www/html/phpMyAdmin-latest-all-languages.tar.gz -C /var/www/html
+tar xvf /var/www/html/phpMyAdmin-latest-all-languages.tar.gz -C /var/www/html
 
 #Eliminamos el archivo tar .gz Para no dejar archivos basura.
 rm -rf /var/www/html/phpMyAdmin-latest-all-languages.tar.gz
@@ -49,7 +49,6 @@ cp /var/www/html/phpmyadmin/config.sample.inc.php /var/www/html/phpmyadmin/confi
 #este archivo sudo cp /var/www/html/phpmyadmin/config.sample.inc.php /var/www/html/phpmyadmin/config.inc.php
 #Al poner \$ ya no considera al dolar como un caracter especial.
 
-sed -i "s/\(\$cfg\['blowfish_secret'\] =\).*/\1 '$RANDOM_VALUE';/" /var/www/html/phpmyadmin/config.inc.php
 
 #Creación de la base de datos phpMyAdmin
 mysql -u root < /var/www/html/phpmyadmin/sql/create_tables.sql
@@ -71,4 +70,4 @@ RANDOM_VALUE=`openssl rand -hex 16`
 sed -i "s/\(\$cfg\['blowfish_secret'\] =\).*/\1 '$RANDOM_VALUE';/" /var/www/html/phpmyadmin/config.inc.php
 
 #Añadimos la configuración del directorio temporal.
-sed -i "/blowfish_secret/a \$cfg\['TempDir'\] = '/tmp' /var/www/html/phpmyadmin/config.inc.php;
+sed -i "/blowfish_secret/a \$cfg\['TempDir'\] = '/tmp';" /var/www/html/phpmyadmin/config.inc.php
